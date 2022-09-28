@@ -1,0 +1,16 @@
+
+data_path:
+  psid: "../data_psid/data/"
+  data: "analysis/input/data"
+  cc_simulations: "../data_cc_simulations/data/"
+
+release_path:
+  psid: "analysis/release/dinc_ltv_in_psid/"
+  sim: "analysis/release/meas_error_sim/"
+
+source_path:
+  psid: "analysis/source/dinc_ltv_in_psid/"
+  sim: "analysis/source/meas_error_sim/"
+
+
+

@@ -1,0 +1,14 @@
+&config_nml
+    betai =  1.193214
+    mui = -0.02266
+    sigi = 0.0141521
+    phii = 0.653078
+    sigty = 0.35
+    indcase = 3
+    stigma = 0.9
+
+/
+
+&ag_shock_config
+  boost_prob_bad_house_shock = 0.2
+/

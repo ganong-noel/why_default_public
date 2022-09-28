@@ -1,0 +1,149 @@
+---
+title: "CoreLogic data cleaning"
+output: 
+  html_document:
+    highlight: pygment
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+This document follows the order the code is executed, first `read_all.R`, second `merge_hpi.R`, and third `plot_and_tabulate.R`.
+
+## CoreLogic Deed Data
+
+The first dataset, the CoreLogic deed data, is cleaned in `read_all.R`. The data contains information on location, time, type, and the value of a deed. Each property includes an ID that makes it possible to identify later sales of a property and, therefore, observe the value change in a house.
+
+An observation needs to have a transaction amount, a date, and at most one mortgage on the house. The transactions are not older than 1989.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="52"'}
+
+filter(!is.na(amount),
+       !is.na(date),
+       mtg_seq %in% c(0, 1)) %>% 
+mutate(date = ymd(str_replace(date, "00$", "01"))) %>%
+filter(date > ymd("19890101"))
+
+```
+
+
+Then two datasets are created. One (`group_sales`) identifies transaction groups with the same buyer name, seller name, sale document type, sale amount, mortgage amount, and sale dates that are less than five days apart. The other one (`duplicate_obs`) identifies duplicated deeds.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="108"'}
+
+group_sales <- with_match %>%
+  group_by(sale_group) %>%
+  filter(n_distinct(prop_id) > 1) %>% 
+  ungroup() %>%
+  transmute(prop_id, fips, date, group = TRUE) %>%
+  distinct()
+
+duplicate_obs <- with_match %>%
+  group_by(sale_group) %>%
+  filter(n_distinct(prop_id) == 1) %>%
+  ungroup() %>%
+  distinct()                   
+
+```
+
+Then only observations are kept that have an ID, ZIP, and fips code.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="123"'}
+
+filter(!is.na(prop_id),
+       !is.na(zip),
+       !is.na(fips))
+
+```
+
+
+The two datasets from above are merged to the filtered data and only one transaction for each group or a transaction without a group is kept.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="130"'}
+
+group_by(sale_group) %>%
+filter(is.na(sale_group) | row_number() == 1) %>% 
+ungroup()
+
+```
+
+
+Then properties are dropped where we can't observe the previous sale amount or if there was a foreclosure or short sale. Furthermore, the sample is reduced to: only single-family homes (`property_ind == 10`), arm's length transactions (`primary_cat == "A"`), resales, standalone mortgages/refinances, and subdivision/new construction (`trans_type %in% c(1, 3)`), and transactions without partial interest in the property.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="156"'}
+filter(!is.na(prev_amount),
+       !prev_foreclosure,
+       !prev_short_sale,
+       property_ind == 10, lag_property_ind == 10,
+       primary_cat == "A", lag_primary_cat == "A",
+       trans_type %in% c(1, 3), lag_trans_type %in% c(1, 3),
+       is.na(lag_partial_ind), is.na(partial_ind),
+       is.na(group), is.na(lag(group)),
+)
+```
+
+
+Finally, only properties are kept that are sold after 1998, within ten years, but not within one year.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="171"'}
+
+mutate(time_diff = (date - prev_sale)/365) %>%
+filter(date >= ymd("19980101"))  %>%
+filter(time_diff < 10) %>%
+group_by(prop_id) %>%
+filter(!any(time_diff < 1)) %>%
+ungroup()
+```
+
+
+## CoreLogic HPI data
+
+The CoreLogic HPI provides data on house price values by location and month. In this case, the ZIP level data is used from 1988 on. This data is merged to the deed data in `merge_hpi.R`.
+
+Only the series for single-family homes is kept.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="10"'}
+filter(TIER_CODE == 0)
+```
+
+
+Years before 1988 and ZIP codes that aren't in the deed data are dropped.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="55"'}
+zip_hpi <- zip_hpi %>%
+  filter(year(hpi_dt) > 1988) %>% 
+  semi_join(repeat_sales_clean,
+            by = c(prop_zip = "zip"))
+```
+
+Then only months are kept where we can observe a change in the price index.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="66"'}
+mutate(rel_inc = hpi_current/hpi) %>%
+select(-hpi_current, -hpi) %>%
+filter(!is.na(rel_inc))
+```
+
+
+## Merged HPI and Deed data
+The cleaning steps below are in `plot_and_tabulate.R`.
+
+Transactions with a sale amount of more than 1000 are kept to avoid nominal sales.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="10"'}
+filter(amount > 1000, prev_amount > 1000) 
+```
+
+
+Transactions with a price change of more than 50% in a year are dropped, except for the comparison with Giacoletti.
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="15"'}
+yearly_change = change^(1/time_diff)
+valid_yearly_change = abs(yearly_change - 1) < 0.5
+```
+
+```{r, eval= FALSE, attr.source='.numberLines startFrom="23"'}
+error_dist <- filter(error_dist, valid_yearly_change)
+```
