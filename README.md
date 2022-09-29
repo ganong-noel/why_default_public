@@ -2,8 +2,6 @@
 
 Please send feedback and questions to ganong@uchicago.edu.
 
-
-
 ## Driver scripts
 
 There are four master scripts in this directory: 
@@ -13,19 +11,15 @@ There are four master scripts in this directory:
   - `structural_model_fortran/master.sbatch` runs the structural model, producing output that will be plotted by running  `analysis/source/master.R`
   - `run_script.sh` runs the measurement error in LTV analysis that is in `analysis/source/corelogic`. It takes up to 25 hours to run.
 
-
-
 ## Package Versioning
 
-To ensure that there aren't any problems with package versioning there is the option to re-install the needed packages with the version from the last complete run. To do this locally one has to set `reinstall_packages` to `TRUE` in the master script. On the RCC, one can run `sh analysis/analysis/source/package_versioning/install_pkg_rcc.sh` and the correct packages are installed. For both scripts, locally and on the RCC, to work one need to have the package `versions` installed.
+To ensure that there aren't any problems with package versioning there is the option to re-install the needed packages with the version from the last complete run. To do this locally one has to set `reinstall_packages` to `TRUE` in the master script. You will need the package `versions` installed.
 
-- `session_info_local.txt` and `session_info_rcc.txt` records the R and package versions from the last complete run.
 - `load_packages.R` is called from the master script and loads in the packages that are necessary to run the local files.
-- `install_pkg_rcc.sh` and `load_packages_rcc.R` are only necessary when installing packages on the RCC. The scripts starts an installation with the version of a package from the last successful run.
 
 ## CRISM
 
-The code in `analysis/source/CRISM` creates the results in Table 6, Figure A-1, Figure A-13, and the benchmarks in Table A-2. Each R and Stata script is called from a sh-file. Each sh-file starts a job on the RCC. A guide to run jobs on the RCC is [here](https://github.com/ganong-noel/lab_manual/wiki/Midway-RCC-Guide). All files can be executed at once with `master_default.sh`. To run the files one needs to change the scratch to directory in `file_names.sh` or gain access to the specified scratch directory. Furthermore, an associated with `pnoel`,  `pi-ganong`, and `crism-mcdash` is required. This can be achieved [here](https://rcc.uchicago.edu/accounts-allocations/general-user-account-request). To get approved for `crisp-mcdash`, it is necessary to get the approval from the [Fama-Miller Center](mailto:fama-miller@chicagobooth.edu). Below is the hierarchy and order in which each file is called.
+The code in `analysis/source/CRISM` creates the results in Table 6, Figure A-1, Figure A-13, and the benchmarks in Table A-2. Each R and Stata script is called from a sh-file. Each sh-file starts a job on the UChicago Research Computing Cluster. All files can be executed at once with `master_default.sh`. To run the files one needs to change the scratch to directory in `file_names.sh` or gain access to the specified scratch directory. Below is the hierarchy and order in which each file is called.
 
 - `00_prelim.R`, `file_names.sh`, and `00_get_bash_args.R` define file paths and auxiliary functions from `prelim.R` that are passed to the remaining scripts.
 - `00_cleaning_function.R` has cleaning functions specific to CRISM, including the functions that import the Equifax and McDash data. This file defines the thresholds that match the second lien to the first lien.
@@ -56,17 +50,12 @@ The code in `analysis/source/CRISM` creates the results in Table 6, Figure A-1, 
   - `14_ph_reg_data.R` creates the loan-level data for the IV regressions. Here the data is further reduced to a 1% sample.
   - `15_ph_regressions.R` runs the regressions in Table 6 and the regression with LTV bins shown in the appendix.
 
-
-
 ## Simulations
 
 The simulations to illustrate the method described in Section 2, the measurement error simulation, and the relaxation of assumption 3 are in `analysis/source/meas_error_sim`.
 
 - `relax_assumption_3.R` produces the simulation outlined in Appendix C.3, which creates Figure A-18 to A-22 and Table A-13.
 - `sim_bias_var_tradeoff.R` produces the simulation outlined in Appendix C.4 and creates Figure A-23.
-
-
-
 
 ## JPMCI Plots constructed on the outside
 
@@ -91,23 +80,19 @@ Once the model is run, the following scripts produce plots and statistics for th
 - `sarmi_processing_functions.R` creates functions for cleaning and analyzing the model output from `sarmi.m`
 - `stigma_cost_value_functions.R` calculates the consumption cost of stigma at our optimal level calculated in `optimal_stigma.R`
 
-
-
 ## PSID analysis
 
-The files in `analysis/source/dinc_ltv_in_psid` run the PSID analysis outlined in Section 5. The PSID analysis uses Gerardi, Herkenhoff, Ohanian and Willen (2017)'s PSID extract (available as part of the [replication kit](https://sites.google.com/site/kyleherkenhoff/research)), saved here as `analysis/input/data/psid_kfh_2013_3.dta` 
+The files in `analysis/source/dinc_ltv_in_psid` run the PSID analysis outlined in Section 5. The PSID analysis uses Gerardi, Herkenhoff, Ohanian and Willen (2017)'s PSID extract (available as part of the replication kit on Kyle Herkenhoff's [website](https://sites.google.com/site/kyleherkenhoff/research)), saved here as `analysis/input/data/psid_kfh_2013_3.dta` 
 
 - `ability_to_pay_by_ltv.R` runs the PSID analysis. The output are Figures 6a and the numbers in Section 5 of the paper.
 - `psid_benchmarks.R` produces the tables derived from the PSID analysis, which include Table 3, Table A-3, Table A-12, and Table A-16. This script has to be run after `ability_to_pay_by_ltv.R` to have the necessary data loaded.
 
-
-
 ## CoreLogic
 
-The files for the measurement error in LTV ratio analysis described in Section 4.3 are in `analysis/source/corelogic/`. To run the scripts one needs to contact [Colleen Reda](mailto:cmreda@uchicago.edu).
+The files for the measurement error in LTV ratio analysis described in Section 4.3 are in `analysis/source/corelogic/`. 
 
 - `corelogic_clean.Rmd` and `corelogic_clean.html` contains explanations that walk through the three R-files in the folder.
-- `run_script.sh` creates the job on the RCC that runs the measurement error analysis.
+- `run_script.sh` creates the job on the Research Computing Cluster that runs the measurement error analysis.
   - `read_all.R` imports the CoreLogic data and cleans it for the next script.
   - `merge_hpi.R` uses the cleaned CoreLogic HPI and merges it to the deed data.
   - `plot_and_tabulate.R` uses the final dataset to create Figure A-11, panel a and b.
