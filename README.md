@@ -13,13 +13,15 @@ There are four master scripts in this directory:
 
 ## Package Versioning
 
-To ensure that there aren't any problems with package versioning there is the option to re-install the needed packages with the version from the last complete run. To do this locally one has to set `reinstall_packages` to `TRUE` in the master script. You will need the package `versions` installed.
+To ensure that there aren't any problems with package versioning there is the option to re-install the needed packages with the version from the last complete run. To do this locally one has to set `reinstall_packages` to `TRUE` in the master script. On the UChicago Research Computing Cluster (RCC), one can run `sh analysis/analysis/source/package_versioning/install_pkg_rcc.sh` and the correct packages are installed. For both scripts, locally and on the RCC, to work one need to have the package `versions` installed.
 
+- `session_info_local.txt` and `session_info_rcc.txt` records the R and package versions from the last complete run.
 - `load_packages.R` is called from the master script and loads in the packages that are necessary to run the local files.
+- `install_pkg_rcc.sh` and `load_packages_rcc.R` are only necessary when installing packages on the RCC. The scripts starts an installation with the version of a package from the last successful run.
 
 ## CRISM
 
-The code in `analysis/source/CRISM` creates the results in Table 6, Figure A-1, Figure A-13, and the benchmarks in Table A-2. Each R and Stata script is called from a sh-file. Each sh-file starts a job on the UChicago Research Computing Cluster. All files can be executed at once with `master_default.sh`. To run the files one needs to change the scratch to directory in `file_names.sh` or gain access to the specified scratch directory. Below is the hierarchy and order in which each file is called.
+The code in `analysis/source/CRISM` creates the results in Table 6, Figure A-1, Figure A-13, and the benchmarks in Table A-2. Each R and Stata script is called from a sh-file. Each sh-file starts a job on the RCC. All files can be executed at once with `master_default.sh`. To run the files one needs to change the scratch to directory in `file_names.sh` or gain access to the specified scratch directory. Below is the hierarchy and order in which each file is called.
 
 - `00_prelim.R`, `file_names.sh`, and `00_get_bash_args.R` define file paths and auxiliary functions from `prelim.R` that are passed to the remaining scripts.
 - `00_cleaning_function.R` has cleaning functions specific to CRISM, including the functions that import the Equifax and McDash data. This file defines the thresholds that match the second lien to the first lien.
