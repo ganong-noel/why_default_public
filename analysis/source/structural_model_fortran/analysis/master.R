@@ -7,7 +7,6 @@ library(yaml)
 library(rprojroot)
 library(RColorBrewer)
 
-setwd("~/repo/strategic/") # nolint
 make_path <- is_git_root$make_fix_file()
 config <- yaml.load_file(make_path("analysis/config.yml"))
 source("prelim.R")

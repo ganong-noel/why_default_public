@@ -10,7 +10,6 @@ library(broom)
 library(RColorBrewer) # nolint
 
 
-setwd("~/repo/strategic/") # nolint
 make_path <- is_git_root$make_fix_file()
 out_path <- make_path("analysis/release/structural_model_fortran/")
 
@@ -23,7 +22,7 @@ source(file.path(code_path, "sarmi_processing_functions.R"))
 
 config <- yaml.load_file(make_path("analysis/config.yml"))
 source("prelim.R")
-data_path <- "~/repo/data_cc_simulations/data"
+data_path <- config$data_path$cc_simulation
 
 pattern <- "stigma_0_bh_shock_0"
 n <- 10
