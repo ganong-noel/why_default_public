@@ -1,92 +1,141 @@
-# Diagram with flow of code
-[See google drawing](https://docs.google.com/drawings/d/1nRx3OgYSFPtJHKkdUWSJ5zO_m7YMtIWhBQ15pEPH-mo/edit?usp=sharing)
+# Structural Model
 
-# Running code from Fortran to R
+We are able to release a full repkit for this section
 
-## Overview / quick start
+## Running the model
 
-1. Pull the repository on to the RCC.
-1. Create a `run` directory on scratch area for large output storage
+### Overview
+
+To run the model, we use a remote computing cluster with 28 Intel E5-2680v4 2.4GHz CPUs, 64 GB of memory, and EDR and FDR Infiniband interconnect. Each run of the model takes around 10 hours and requires up to 30G of memory. If you would like to skip this part of the replication, please email ganong@uchicago.edu or pascal.noel@chicagobooth.edu to request the simulation data.
+
+An important note: this code is based on code originally created by John Campbell and Joao Cocco. We are very grateful that they shared their code with us.
+
+### Instructions
+
+1. Pull the repository onto your cluster.
+1. Create a directory for storing the large output of the model. We create a `run` directory in the scratch area of our cluster.
     ```
     mkdir $SCRATCH/run
     ```
-1. Set parameters in `config_nml.nml`
-1. Run the simulation (This may take up to 10 hrs)
+    If you choose to make a different directory, you will need to edit the value of the `model_dir` object in the `master.sbatch` script. Set it equal to the filepath that leads to the directory you make for the output.  
+1. The four model runs that you will need to do are in the table below. Choose one, and edit the `stigma` and  `boost_prob_bad_house_shock` parameters in `config_nml.nml` to the values corresponding to your chosen run.
+
+    | model_id | stigma | boost_prob_bad_house_shock |
+    | --- | --- | --- |
+    | stigma_0_bh_shock_0 | 0 | 0 |
+    | stigma_80_bh_shock_20 | 0.8 | 0.2 |
+    | stigma_90_bh_shock_20 | 0.9 | 0.2 |
+    | stigma_100_bh_shock_20 | 1.0 | 0.2 |
+1. Set your working directory to `/analysis/source/structural_model_fortran`. Run the simulation using the code below:
     ```
-    sbatch master.sbatch --armi --model_id <something to identify the model> --config config_nml.nml --n 5
+    sbatch master.sbatch --armi --model_id [Insert the model_id from the table here] --config config_nml.nml --n 10
     ```
-1. Secure copy (scp) the output files to your computer
-1. Analyze with R
+    Note that there is a preamble in `master.sbatch` that is specific to our computing cluster. You will have to edit that preamble according to your own cluster's requirements.
+1. Repeat steps three and four until you've run all four models.
+1. On your local machine, create a directory called `data_cc_simulations` within the same parent directory where you cloned/saved the repkit. Then, create a repo within `data_cc_simulations` called `data`. This will maintain the file paths we use in the R code that analyzes the simulations. If you'd like a different setup, you will have to edit the `cc_simulations` object in `analysis/config.yml`.
+1. After you've run the models, secure copy (scp) the output files with "simulation" at the beginning of their name from the directory you made in step one to the directory `[parent directory]/data_cc_simulations/data` that you made in step six.
 
-## Configuration
-`config_nml.nml` is a fortran namelist that will be parsed by fortran and matlab code. (Note: see  fortran (e.g. armi.f90) and matlab code (sarmi.m) to understand how the parameters are incorporated to the simulation).
+### File Descriptions
 
-## master script: simulations with Fortran + matlab
-`master.sbatch` is an sbatch script written to work on the RCC server. It takes a config file and a few additional arguments and automates the entire simulation process.
+#### Fortran scripts (creates policy functions)
+Fortran code must be compiled. This is automated with [compile_code.sh](https://github.com/ganong-noel/why_default_public/blob/6f0ee1c84e2d7576a4a62a7352d785c7e59d7d52/analysis/source/structural_model_fortran/compile_code.sh).
 
-- `--armi` use arm code
-- `--frmi` use frm code
-- `--model_id <str>` <str> will be part of the names of output files and folder that holds it.
-- `--config <file>` use <file> for configuration
-- `--n <int>` produce <int> simulations (matlab)
-- `--rent <dir_path>` use rent policy function files found in <dir_path> instead of producing new files
+- `Renti` is executable from Fortran run by the master script.
+    - Needs: behavioral parameters (`config_nml.nml`)
+    - Byproduct (console output): `renti.out`
+    - Output: `rear{01,20}`
+    - Purpose: gives values if you switch from paying mortgage to renting
+- `Armi` is executable from Fortran run by the master script.
+    - Needs:  `rear{01,20}`, behavioral + mortgage parameters (`config_nml.nml`)
+    - Byproduct (console output): `armi.out`
+    - Output: `year{01,20}`, `v01arm`
+    - Purpose: gives values if you keep paying mortgage
+    - The code is described section by section [here](https://github.com/ganong-noel/why_default_public/blob/541b027115671bda95ee037e5eb9932bf2886210/analysis/source/structural_model_fortran/armi_analysis.pdf)
 
-This is run from `./strategic/analysis/source/structural_model_fortran`. The files output into `/scratch/midway2/<user>/run/`.
+#### Matlab scripts (runs simulations)
+- `sarmi.m` is run by the master script
+    - Needs: `rear{01,20}` and `year{01,20}` files, behavioral + mortgage parameters (`config_nml.nml`)
+    - Output: `statsa800x50.raw` (we rename this immediately to `simulation_<model_id>_i.raw`).
+    - The code is described section by section [here](https://github.com/ganong-noel/why_default_public/blob/541b027115671bda95ee037e5eb9932bf2886210/analysis/source/structural_model_fortran/sarmi_m_analysis.pdf)
 
-The output files are deterministically created based on parameters. The 40 files are roughly 2GB and are called `rear<int>` or `year<int>` with int from `01` to `20`.
-
-### Fortran
-Fortran is a compiled language. This means that you must process the code with a compiler to make an executable in order to run the code.
-
-`compile_code.sh` automates the compilation process. It relies on _gfortran_ a fortran compiler that is standard on linux and works on mac. This file is called by `master.sbatch`.
-
-### matlab
-The matlab code is memory intensive and so is instantiated by a separate sbatch script.
-
-`matlab_batch.sbatch` requests a larger memory node and runs the matlab simulation which relies on the policy functions produced by fortran and stored on scratch.
-
-The matlab output files are ~200MB.
-
-## Analyzing simulation output in R
-### moving files
-I manually move the output files I want to `/scratch/midway2/<user>/run/out/` and then copy them to a local directory. e.g.
-```
-scp -r <user>@midway2.rcc.uchicago.edu:/scratch/midway2/<user>/run/out/* /home/<user>/current_project/out/
-```
-### analyzing data with `master.R`
-
-`master.R` holds productionized analysis of simulation output.
-
-### data for `master.R`
-
-Data for `master.R` is stored in the repo `data_cc_simulation`.
-
-| script |data name | seed | data description | 
-|---|---|---|---|
-| `cc_table_2_dot_plots.R`| "cocco_original_sigty_high_indcase_3_2019_06_11" | cocco's seed | HH parameter's as given |
-| `cc_table_2_dot_plots.R`| "cocco_original_sigty_low_indcase_3_2019_06_11" |  cocco's seed | HL parameter's as given |
-| `cc_table_2_dot_plots.R`| "cocco_original_sigty_high_indcase_1_2019_06_11" | cocco's seed | LH parameter's as given |
-| `cc_table_2_dot_plots.R`| "cocco_original_sigty_low_indcase_1_2019_06_11" | cocco's seed | LL parameter's as given |
-| `chase_v_cc_simulations.R`| "cocco_original_sigty_high_indcase_3" | 5x random seed| HH parameter's as given |      
+#### Processing scripts
+To smooth the process we wrote scripts:
+- `config_nml.nml`: a Fortran nameslist file that sets specified paramaters in `renti`, `armi` and `sarmi.` The list can be extended by updating those three files.
+- `master.sbatch`: an sbatch script that flexibly runs the simulation process from start to finish.
+- `compile_code.sh`: a shell script that compiles Fortran code to create `renti` or `armi`. First, it compiles helper functions individually using `-c` flag, and then it compiles everything into a single executable file.  (Helper functions are described below).
+- `matlab_batch.sbatch`: an sbatch script that runs the matlab simulation. This is called by `master.sbatch`.
 
 
-# Letter from Joao Cocco
-The zip file entitled “Rent” has the fortran programs for the default state, in which the agent rents for the remaining of the time horizon. The value functions that are generated from these programs are the input for the others for the choices of whether to default or to sell and move to rental.
+#### Helper files
+Renti, armi and sarmi.m rely on helper functions.
 
-The zip file entitled “ARM_HH”  has the fortran programs for the ARM that solve the program and generate the policy and value functions and the matlab programs that are used to simulate the model. The file is entitled ARM_HH since these programs are setup for High initial inflation and High initial real interest rates. These are just initial conditions and can easily be changed in the programs.
+##### Fortran
+- `ntoil.f90`: n to index location. takes a value and determines the nearest index in a set of grid points. (Confusing point: `ntoil` takes an input called `n` and another called `value`. `n` is the number of grid points in the grid, while `value` is the value we determine the best index for.)  
+- `Spline.f90`: `Spline` determines values between grid points
+- `Splint.f90`: `Splint` is called by irev* functions. Similar to spline, it determines values between grid points.
+- `Gettrans.f90`: takes quadrature points and creates a transition matrix.
+- `irutil2.f90`: takes consumption grid and returns a utilty grid
+- `irevi.f90`: cycles through various states of the world to produce an expected value of utility in the next period for mortgagors (uncertain)
+- `irevrenti.f90`: cycles through various states of the world to produce an expected value of utility in the next period for renters
 
-Finally, the zip file entitled FRM_HH has the programs for the FRM. As before, fortran programs are for solving the model and matlab programs are for simulating it. There is quite a bit of repetition in the matlab programs since my computer did not have enough memory to load all policy functions at the same time. So I had to do it sequentially.
+##### Matlab
+- `ntoi.m`: same functionality as ntoil.f90
+- `gettrans.m`: same functionality as Gettrans.f90
+- `condnorm.m`: calculates conditional probabilities of quadrature points for `gettrans.m`
+- `read_namelist.m`: a function found online to read Fortran's native namelists
 
-The FRM programs with the refinancing option are the trickiest, and they need to be solved sequentially. That is: first one needs to solve the FRM program for the lowest level of initial interest rates. Then one uses the output from this program as an input for the one with the second lowest level of initial interest rates. If and when interest rates decline the agent decides whether to refinance the FRM mortgage. Then one uses the input of these two programs as an input for the one with the third lowest level of initial interest rates. Again this is to model the refinancing decisions. And so on.
 
-The FRM programs that I am sending attached are the most general, for the highest level of initial interest rates. This can easily be changed by changing the initial conditions and the inputs that one needs to feed in for the refinancing option.
 
-Thanks.
+#### output files
+- `simulation_<model_id>_<i>.raw`: the output from the matlab simulation
+- `rear{01, 20}`: output from `renti`. For each year, we have a value function and policy function (table) that is indexed by:
+    - a grid point from `ncash` (`ind2`: 1 to 185)
+    - number of high inflation in the past: 1 stands for zero (`ind4 or 8`: 1 to t+1)
+    - number of low permanent income in the past (`ind5`: 1 to t)
+    - number of low housing price innovations in past (`ind8`: 1 to t)
+    - Current inflation rate (`ind3`: 1 or 2)
+    - Current real interest rate (`ind9`: 1 or 2)
+    - The value functions are used by `armi`, while the policy functions are used in simulations.
+- `year{01, 20}`: output from `armi`. For each year, we have a policy function and default function (table) indexed as `rear{01, 20}`.
+- `varm01`: output from `armi` includes a one year policy function for arms.
+- `armi.out`/`renti.out`: the output from running the eponymous fortran command. This includes a print out of the config_nml.nml file.
+- `slurm_*`: each run produces two slurm files which capture the standard output from the simulation. The first file is from running the fortran section of the simulation and the second reports the matlab output. The fortran section includes warnings from compilation, which are normal. The output from fortran and matlab could be used for debugging.
 
-# Further documentation
-The following resources may be helpful for further understanding of parts of the model:
-- [Algebra to code](https://github.com/ganong-noel/strategic/wiki/Understanding-the-Campbell-and-Cocco-(2015)-model-of-mortgage-default:-mapping-from-algebra-to-code)
-- [Code process](https://github.com/ganong-noel/strategic/wiki/Campbell-and-Cocco-(2015)-code-process)
-- [Data naming conventions](https://github.com/ganong-noel/data_cc_simulations)
-- [Code section-by-section documentation](https://github.com/ganong-noel/strategic/tree/149b286dde3706645579d4070a1bc6114ebf8b33/issues/issue_226_document_model)
-- [The paper itself](https://onlinelibrary.wiley.com/doi/full/10.1111/jofi.12252)
+## Analyzing the model
+
+### Instructions
+
+To recreate our analysis of the model, all you have to do is run `master.R` saved here, `analysis/source/structural_model_fortran/analysis/master.R`.
+
+### File Descriptions
+
+#### Scripts
+
+- `master.R` runs all analysis scripts in `analysis/source/structural_model_fortran`
+- `prelim.R` loads required parameters, libraries, and functions
+- `config.yml` defines relevant file paths
+- `cocco_data.R` hardcodes data from Campbell and Cocco (2015) to be used for comparison to our model runs in `cc_table_2_dot_plots.R`
+- `sarmi_processing_functions.R` creates functions for cleaning and analyzing the model output from `sarmi.m`
+- `cc_table_2_dot_plots.R` produces Figure A-17
+- `optimal_stigma.R` compares runs of the model with different stigma values to the Chase data to determine which stigma value creates the best fit
+- `chase_vs_cc_simulations.R` produces Figure 7
+- `stigma_cost_value_functions.R` calculates the consumption cost of stigma at our optimal level calculated in `optimal_stigma.R`
+
+#### Inputs
+
+- Simulation data from running the model
+  - `[parent directory]/data_cc_simulations/data/simulation_hh_0_stigma_0_bh_rand_large_test_wealth.raw`
+  - `[parent directory]/data_cc_simulations/data/simulationhh_80_stigma_.2_bh_rand_large_test_wealth.raw`
+  - `[parent directory]/data_cc_simulations/data/simulation_hh_90_stigma_.2_bh_rand_large_aux.raw`
+  - `[parent directory]/data_cc_simulations/data/simulation_hh_100_stigma_.2_bh_rand.raw`
+
+- Chase data
+  - `gn_strategic_latest.xls` [Edit]
+
+#### Outputs
+
+- `table_2_rep_hh.png` is Figure A-16
+- `optimal_stigma_value.csv` contains the stigma value that best fits the Chase data
+- `delta_inc_at_default_cc_v_chase_no_stigma.png` is the top half of Figure 7
+- `delta_inc_at_default_cc_v_chase_with_stigma.png` is the bottom half of Figure 7
+- `stigma_cost.csv` contains the consumption cost of stigma at our optimal level.

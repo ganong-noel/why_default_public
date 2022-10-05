@@ -4,7 +4,7 @@ Please send feedback and questions to ganong@uchicago.edu.
 
 ## Driver scripts
 
-There are four master scripts in this directory: 
+There are four master scripts in this directory:
 
   - `master.R` in `analysis/source` executes files that run locally. This script calls `package_versioning/load_packages.R`, which installs the version of all packages used at the time of the last full build. The complete run takes about 10 minutes.
   - `CRISM/master_default.sh` produces the CRISM plots, tables, and regression results. The full run takes up to a week.
@@ -70,36 +70,26 @@ The files in `analysis/source/plot_chase` produce plots that use JPMCI disclosur
 
 ## Structural Model
 
-This code is based on code originally created by John Campbell and Joao Cocco. We are very grateful that they shared their code with us. The files in `analysis/source/structural_model_fortran` run the structural model of mortgages default from Campbell and Cocco and determine the optimal value for stigma. Detailed documentation for the model, including the code structure and how to run it, can be found in `analysis/source/structural_model_fortran/README.md`
-
-Once the model is run, the following scripts produce plots and statistics for the paper
-
-- `cc_table_2_dot_plots.R` produces Figure A-17
-- `chase_vs_cc_simulations.R` produces Figure 7 and animated version for slides
-- `cocco_data.R` hardcodes data from Campbell and Cocco (2015) to be used for comparison to our model runs in `cc_table_2_dot_plots.R`
-- `master.R` runs all analysis scripts in `analysis/source/structural_model_fortran`
-- `optimal_stigma.R` compares runs of the model with different stigma values to the Chase data to determine which stigma value creates the best fit. 
-- `sarmi_processing_functions.R` creates functions for cleaning and analyzing the model output from `sarmi.m`
-- `stigma_cost_value_functions.R` calculates the consumption cost of stigma at our optimal level calculated in `optimal_stigma.R`
+This code is based on code originally created by John Campbell and Joao Cocco. We are very grateful that they shared their code with us. The files in `analysis/source/structural_model_fortran` run the structural model of mortgage default from Campbell and Cocco and determine the optimal value for stigma. Detailed documentation for the model, including the code structure and how to run it, can be found in `analysis/source/structural_model_fortran/README.md`
 
 ## PSID analysis
 
-The files in `analysis/source/dinc_ltv_in_psid` run the PSID analysis outlined in Section 5. The PSID analysis uses Gerardi, Herkenhoff, Ohanian and Willen (2017)'s PSID extract (available as part of the replication kit on Kyle Herkenhoff's [website](https://sites.google.com/site/kyleherkenhoff/research)), saved here as `analysis/input/data/psid_kfh_2013_3.dta` 
+The files in `analysis/source/dinc_ltv_in_psid` run the PSID analysis outlined in Section 5. The PSID analysis uses Gerardi, Herkenhoff, Ohanian and Willen (2017)'s PSID extract (available as part of the replication kit on Kyle Herkenhoff's [website](https://sites.google.com/site/kyleherkenhoff/research)), saved here as `analysis/input/data/psid_kfh_2013_3.dta`
 
 - `ability_to_pay_by_ltv.R` runs the PSID analysis. The output are Figures 6a and the numbers in Section 5 of the paper.
 - `psid_benchmarks.R` produces the tables derived from the PSID analysis, which include Table 3, Table A-3, Table A-12, and Table A-16. This script has to be run after `ability_to_pay_by_ltv.R` to have the necessary data loaded.
 
 ## CoreLogic
 
-The files for the measurement error in LTV ratio analysis described in Section 4.3 are in `analysis/source/corelogic/`. 
+The files for the measurement error in LTV ratio analysis described in Section 4.3 are in `analysis/source/corelogic/`.
 
 - `corelogic_clean.Rmd` and `corelogic_clean.html` contains explanations that walk through the three R-files in the folder.
 - `run_script.sh` creates the job on the Research Computing Cluster that runs the measurement error analysis.
   - `read_all.R` imports the CoreLogic data and cleans it for the next script.
   - `merge_hpi.R` uses the cleaned CoreLogic HPI and merges it to the deed data.
   - `plot_and_tabulate.R` uses the final dataset to create Figure A-11, panel a and b.
-  
-  
+
+
 ## JPMCI
 Some of the data used for this paper were prepared in JPMorganChase Insitute's (JPMCI) secure computing facilities. Due to JPMCI's rules on access and confidentiality, the programming code and analysis files cannot be made available publicly. The analysis files and programming code created by the authors will be available within JPMCI's secure computing facilities until 2027, and can be requested by researchers with approved projects (email institute@jpmchase.com). We grant any researchers with appropriate approval to conduct research on JPMCI's secure computing facilities access to these files. Below, we list the tables needed to replicate the analysis as well as some key variables
 
@@ -121,12 +111,12 @@ Some of the data used for this paper were prepared in JPMorganChase Insitute's (
 
 
 
-`institute_archive.ganong_strategic_qje_do_not_delete_tb_all_abovewater_hist`: 
+`institute_archive.ganong_strategic_qje_do_not_delete_tb_all_abovewater_hist`:
 - `acctdim_sk2`
 - `delin_period`
 - `received_ui`
 
-`institute_archive.ganong_strategic_qje_do_not_delete_tb_all_underwater_micro`: 
+`institute_archive.ganong_strategic_qje_do_not_delete_tb_all_underwater_micro`:
 - `acctdim_sk2`
 - `delin_period`
 - `mos_since_def90`
@@ -135,7 +125,7 @@ Some of the data used for this paper were prepared in JPMorganChase Insitute's (
 - `schd_pi_am`
 
 
-`institute_archive.ganong_strategic_qje_do_not_delete_tb_income_modification`: 
+`institute_archive.ganong_strategic_qje_do_not_delete_tb_income_modification`:
 - `customerdim_sk`
 - `periodid`
 - `monthly_income`
@@ -146,7 +136,7 @@ Some of the data used for this paper were prepared in JPMorganChase Insitute's (
 - `paid_pi_am`
 
 
-`institute_archive.ganong_strategic_qje_do_not_delete_pg_strategic_mtg_12_08_21`: 
+`institute_archive.ganong_strategic_qje_do_not_delete_pg_strategic_mtg_12_08_21`:
 - `acctdim_sk2`
 - `customerdim_sk2`
 - `periodid`
@@ -163,7 +153,7 @@ Some of the data used for this paper were prepared in JPMorganChase Insitute's (
 - `curr_bal_am`
 - `dpd_cd`
 
-`institute_archive.ganong_strategic_qje_do_not_delete_tb_ss_sample`: 
+`institute_archive.ganong_strategic_qje_do_not_delete_tb_ss_sample`:
 - `customerdim_sk2`
 - `periodid`
 - `per_chk_inflow_total_am`
@@ -172,7 +162,7 @@ Some of the data used for this paper were prepared in JPMorganChase Insitute's (
 - `age`
 
 
-`institute_archive.ganong_strategic_qje_do_not_delete_tb_strategic_ui_05_13_21`: 
+`institute_archive.ganong_strategic_qje_do_not_delete_tb_strategic_ui_05_13_21`:
 - `acctdim_sk2`
 - `customerdim_sk2`
 - `periodid`
