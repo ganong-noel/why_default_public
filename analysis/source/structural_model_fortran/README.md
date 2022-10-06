@@ -111,7 +111,7 @@ To recreate our analysis of the model, all you have to do is run `master.R` save
 
 #### Scripts
 
-- `master.R` runs all analysis scripts in `analysis/source/structural_model_fortran`
+- `master.R` runs all analysis scripts in `analysis/source/structural_model_fortran/analysis`
 - `prelim.R` loads required parameters, libraries, and functions
 - `config.yml` defines relevant file paths
 - `cocco_data.R` hardcodes data from Campbell and Cocco (2015) to be used for comparison to our model runs in `cc_table_2_dot_plots.R`
@@ -130,7 +130,7 @@ To recreate our analysis of the model, all you have to do is run `master.R` save
   - `[parent directory]/data_cc_simulations/data/simulation_hh_100_stigma_.2_bh_rand.raw`
 
 - Chase data
-  - `gn_strategic_latest.xls` [Edit]
+  - `[parent directory]/why_default_public/analysis/input/disclose/latest/gn_strategic_latest.xls`
 
 #### Outputs
 
@@ -139,3 +139,4 @@ To recreate our analysis of the model, all you have to do is run `master.R` save
 - `delta_inc_at_default_cc_v_chase_no_stigma.png` is the top half of Figure 7
 - `delta_inc_at_default_cc_v_chase_with_stigma.png` is the bottom half of Figure 7
 - `stigma_cost.csv` contains the consumption cost of stigma at our optimal level.
+- All outputs are saved in `[parent directory]/why_default_public/analysis/release/structural_model_fortran`
