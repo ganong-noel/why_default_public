@@ -6,18 +6,16 @@ Please send feedback and questions to ganong@uchicago.edu.
 
 There are four master scripts in this directory:
 
-  - `master.R` in `analysis/source` executes files that run locally. This script calls `package_versioning/load_packages.R`, which installs the version of all packages used at the time of the last full build. The complete run takes about 10 minutes.
+- `master.R` in `analysis/source` executes files that run locally. This script calls `load_packages.R`, which installs the version of all packages used at the time of the last full build. The complete run takes about 10 minutes.
   - `CRISM/master_default.sh` produces the CRISM plots, tables, and regression results. The full run takes up to a week.
   - `structural_model_fortran/master.sbatch` runs the structural model, producing output that will be plotted by running  `analysis/source/master.R`
   - `run_script.sh` runs the measurement error in LTV analysis that is in `analysis/source/corelogic`. It takes up to 25 hours to run.
 
 ## Package Versioning
 
-To ensure that there aren't any problems with package versioning there is the option to re-install the needed packages with the version from the last complete run. To do this locally one has to set `reinstall_packages` to `TRUE` in the master script. On the UChicago Research Computing Cluster (RCC), one can run `sh analysis/analysis/source/package_versioning/install_pkg_rcc.sh` and the correct packages are installed. For both scripts, locally and on the RCC, to work one need to have the package `versions` installed.
+To ensure that there aren't any problems with package versioning, there is the option to re-install the needed packages with the version from the last complete run. To do this locally, one has to have the package `versions` installed and has to set `reinstall_packages` to `TRUE` in the master script. To do this on the RCC, one has to manually install the package `gt`.
 
-- `session_info_local.txt` and `session_info_rcc.txt` records the R and package versions from the last complete run.
 - `load_packages.R` is called from the master script and loads in the packages that are necessary to run the local files.
-- `install_pkg_rcc.sh` and `load_packages_rcc.R` are only necessary when installing packages on the RCC. The scripts starts an installation with the version of a package from the last successful run.
 
 ## CRISM
 
